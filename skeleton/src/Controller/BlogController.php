@@ -1,16 +1,16 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: federico
- * Date: 24/12/18
- * Time: 10:47
+ * @author federico
+ * @since 24/12/18 10:47
  */
 
 namespace App\Controller;
 
+use App\Entity\BlogPost;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -37,7 +37,7 @@ class BlogController extends AbstractController
     ];
 
     /**
-     * @Route("/{page}", name="blog_list", defaults={"page":"1"})
+     * @Route("/list/{page}", name="blog_list", defaults={"page":"1"}, requirements={"page"="\d+"})
      */
     public function list($page, Request $request)
     {
@@ -53,7 +53,7 @@ class BlogController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", name="blog_by_id", requirements={"id"="\d+"})
+     * @Route("/post/{id}", name="blog_by_id", requirements={"id"="\d+"})
      */
     public function post($id)
     {
@@ -63,7 +63,7 @@ class BlogController extends AbstractController
     }
 
     /**
-     * @Route("/{slug}", name="blog_by_slug")
+     * @Route("/post/{slug}", name="blog_by_slug")
      */
     public function postBySlug($slug)
     {
@@ -71,4 +71,21 @@ class BlogController extends AbstractController
             self::POSTS[array_search($slug, array_column(self::POSTS, 'slug'))]
         );
     }
+
+        /**
+         * @Route("/add", name="blog_add", methods={"POST"})
+         */
+        public function add(Request $request)
+        {
+            /** @var Serializer $serializer */
+            $serializer = $this->get('serializer');
+
+            $blogPost = $serializer->deserialize($request->getContent(), BlogPost::class, 'json');
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($blogPost);
+            $em->flush();
+
+            return $this->json($blogPost);
+        }
 }
